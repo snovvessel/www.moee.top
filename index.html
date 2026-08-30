@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salticat · 主页</title>
+<meta name="description" content="Salticat 的主页">
+<style>
+/* ============================================================
+   Salticat 主页 · 深色毛玻璃 + 月夜远山 + MikuTap 互动
+   纯静态单文件 · 修改指南（全部用记事本/VSCode 编辑即可）:
+
+   【文字类 - 直接搜下面的中文改】
+   - 名字:     搜 SALTICAT
+   - 副标题:   搜 一条爱折腾的猫
+   - 简介:     搜 不是专业程序员
+   - 信息行:   搜 折腾代码和硬件（<ul class="info"> 里的 3 行）
+   - 格言:     搜 不会的东西
+   - 兴趣标签: 搜 INTERESTS（<span>代码</span> 等 6 个）
+   - 时间线:   搜 TIMELINE（<li> 里的年份+事件）
+   - 站点卡片: 搜 SITE（博客/GitHub/邮箱 的标题和链接）
+   - 底部链接: 搜 LINKS（GitHub/Blog/Mail 按钮）
+   - 页脚:     搜 © 2026 Salticat
+   - 页面标题: <title>Salticat · 主页</title>
+
+   【图片类】
+   - 背景图:   替换同目录 background.svg 为你的图（保持同名），
+              或用照片: 把 body 的 background 里 url("background.svg")
+              改成 url("你的图.jpg")
+   - 头像:     搜 avatar-svg（<div class="avatar"> 里的 svg 猫），
+              换成 <img src="照片.png" style="width:88px;height:88px;border-radius:50%">
+
+   【功能类】
+   - GitHub 用户名: 搜 snovvessel（贡献图 API + 链接，共 3 处）
+   - 邮箱:          搜 salticat@example.com（2 处）
+   - 博客链接:      搜 data-blog（部署后指向 blog 子域名）
+   - PLAY 音效:     sounds/ 目录（main=原版Miku, teto_final=Teto成品, bgm=背景乐）
+   ============================================================ */
+:root{
+  --ink:#eae6dc;
+  --ink-soft:#a49e92;
+  --ink-faint:#6e6a60;
+  --accent:#e0645c;
+  --glass-bg:rgba(20,23,32,.42);
+  --glass-border:rgba(255,255,255,.08);
+  --line:rgba(255,255,255,.10);
+  --serif:Georgia,"Times New Roman","SimSun","Songti SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  min-height:100vh;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  background:
+    linear-gradient(180deg, rgba(10,12,18,.15), rgba(10,12,18,.5)),
+    url("background.svg") center / cover no-repeat fixed,
+    #0d1019;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+  background-image:radial-gradient(rgba(255,255,255,.028) 1px, transparent 1.4px);
+  background-size:8px 8px;
+}
+
+/* ---------- 鼠标光晕（跟随光标） ---------- */
+.cursor-glow{
+  position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle, rgba(224,100,92,.09), rgba(96,150,230,.05) 45%, transparent 68%);
+  mix-blend-mode:screen;pointer-events:none;z-index:0;will-change:transform;
+}
+@media (hover:none){.cursor-glow{display:none}}
+
+/* ---------- 背景光斑（极淡） ---------- */
+.blob{position:fixed;border-radius:50%;filter:blur(90px);z-index:0;pointer-events:none}
+.blob-1{width:440px;height:440px;background:rgba(224,100,92,.13);top:14%;left:-130px;animation:drift 26s ease-in-out infinite}
+.blob-2{width:400px;height:400px;background:rgba(96,150,230,.10);bottom:6%;right:-120px;animation:drift 30s 4s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,22px)}}
+
+/* ---------- 布局 ---------- */
+main{
+  position:relative;z-index:3;
+  max-width:1020px;margin:0 auto;
+  padding:48px 24px 40px;
+}
+.layout{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:24px;align-items:start;
+}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* ---------- 毛玻璃 ---------- */
+.glass{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:blur(22px) saturate(1.3);
+  backdrop-filter:blur(22px) saturate(1.3);
+  border:1px solid var(--glass-border);
+  border-radius:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+}
+/* 3D tilt（transform 交给 JS，入场只做 opacity） */
+.tilt{transform-style:preserve-3d;will-change:transform}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.fade{opacity:0;animation:fade-in 1.1s ease forwards}
+.fade-1{animation-delay:.1s}.fade-2{animation-delay:.3s}.fade-3{animation-delay:.5s}
+
+/* ================= 左栏（唯一毛玻璃 = 视觉重心） ================= */
+.sidebar{
+  padding:36px 28px;position:sticky;top:20px;text-align:center;
+  background:rgba(20,23,32,.52);
+  -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  backdrop-filter:blur(24px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06),
+             0 0 0 1px rgba(224,100,92,.05);
+}
+@media (max-width:900px){.sidebar{position:static}}
+
+.avatar{
+  position:relative;
+  width:120px;height:120px;margin:0 auto 20px;border-radius:50%;
+  background:radial-gradient(circle at 32% 26%, rgba(255,255,255,.09), rgba(255,255,255,.02) 70%);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.04);
+  display:grid;place-items:center;
+  transition:transform .5s cubic-bezier(.22,.61,.36,1);
+}
+.avatar:hover{transform:rotate(-3deg) scale(1.03)}
+.avatar::before{ /* 旋转虚线光环点缀 */
+  content:"";position:absolute;inset:-11px;border-radius:50%;
+  border:1px dashed rgba(224,100,92,.32);
+  animation:spin-slow 36s linear infinite;
+  pointer-events:none;
+}
+@keyframes spin-slow{to{transform:rotate(360deg)}}
+.avatar svg{width:88px;height:88px}
+
+/* 名字: 渐变流光（双周期无缝衔接 + 颜色跟随播放区主题色） */
+.name{
+  font-family:var(--serif);
+  font-size:1.75rem;font-weight:700;
+  letter-spacing:.18em;text-indent:.18em;
+  /* 0-50% 与 50-100% 完全对称 → 200% 尺寸 + 位置循环 = 无缝无限衔接 */
+  background:linear-gradient(100deg,
+    #eae6dc 0%, var(--name-c2,#e0645c) 18%, var(--name-c3,#e8b64c) 30%, #eae6dc 50%,
+    #eae6dc 50%, var(--name-c2,#e0645c) 68%, var(--name-c3,#e8b64c) 80%, #eae6dc 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:name-flow 6s linear infinite;
+  filter:drop-shadow(0 2px 18px rgba(0,0,0,.6));
+}
+.name.name-hue{
+  animation:name-flow 6s linear infinite, nameHue 5s linear infinite;
+}
+@keyframes name-flow{from{background-position:0% center}to{background-position:100% center}}
+@keyframes nameHue{
+  0%{filter:drop-shadow(0 2px 18px rgba(0,0,0,.6)) hue-rotate(0deg)}
+  100%{filter:drop-shadow(0 2px 18px rgba(0,0,0,.6)) hue-rotate(360deg)}
+}
+.name .dot{color:var(--accent);-webkit-text-fill-color:var(--accent)}
+.rule{width:44px;height:2px;background:var(--accent);margin:16px auto;border-radius:2px;opacity:.9}
+
+.subtitle{color:var(--ink-soft);font-size:.86rem;letter-spacing:.1em}
+
+.bio{color:var(--ink-soft);font-size:.88rem;margin-top:18px;text-align:left;line-height:1.95}
+
+/* 信息: 清爽纯文字行 */
+.info{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:9px;text-align:left}
+.info li{
+  display:flex;align-items:baseline;gap:11px;
+  font-size:.85rem;color:var(--ink-soft);
+}
+.info li::before{
+  content:"";width:5px;height:5px;border-radius:50%;flex:none;
+  background:var(--accent);opacity:.85;transform:translateY(-2px);
+}
+
+/* ================= 中栏（透明，漂浮于背景） ================= */
+.content{display:flex;flex-direction:column;gap:30px}
+
+.divider{
+  display:flex;align-items:center;gap:16px;
+  margin-bottom:20px;color:var(--ink-faint);
+  font-size:.68rem;letter-spacing:.36em;text-indent:.36em;
+}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.divider span{display:inline-flex;align-items:center;gap:9px}
+.divider span::before{ /* 菱形点缀 */
+  content:"";width:6px;height:6px;background:var(--accent);
+  transform:rotate(45deg);opacity:.85;flex:none;
+}
+.bgm-toggle{
+  background:transparent;border:1px solid var(--line);border-radius:999px;
+  color:var(--ink-faint);font-size:.68rem;letter-spacing:.12em;text-indent:.12em;
+  padding:3px 13px;cursor:pointer;font-family:var(--sans);margin-left:8px;flex:none;
+  transition:all .3s cubic-bezier(.22,.61,.36,1);
+}
+.bgm-toggle:hover{color:var(--ink);border-color:rgba(224,100,92,.5)}
+.bgm-toggle.on{color:var(--accent);border-color:rgba(224,100,92,.55);background:rgba(224,100,92,.10)}
+.src-switch{
+  display:flex;border:1px solid var(--line);border-radius:999px;
+  overflow:hidden;margin-left:8px;flex:none;
+}
+.src-opt{
+  background:transparent;border:none;color:var(--ink-faint);
+  font-size:.68rem;letter-spacing:.12em;text-indent:.12em;
+  padding:4px 13px;cursor:pointer;font-family:var(--sans);
+  transition:all .3s cubic-bezier(.22,.61,.36,1);
+}
+.src-opt:hover{color:var(--ink)}
+.src-opt.active{color:var(--ink);background:rgba(224,100,92,.15)}
+
+.panel{padding:4px 6px}
+
+/* WATCHING 板块已移除，替换为: 格言问候 / 时间线 / 站点卡片 */
+
+/* 格言问候 */
+.hello{
+  font-family:var(--serif);
+  font-size:clamp(1.5rem,3.4vw,2.05rem);
+  font-weight:700;line-height:1.7;letter-spacing:.05em;
+  color:var(--ink);text-shadow:0 2px 30px rgba(0,0,0,.5);
+  padding:6px 2px;
+}
+
+/* 贡献图（动态渲染） */
+.contrib-wrap{width:100%}
+.contrib-wrap svg{width:100%;height:auto;display:block}
+.contrib-msg{color:var(--ink-faint);font-size:.8rem;text-align:center;padding:22px 0;letter-spacing:.1em}
+
+/* PLAY: Teto 五十音键盘 */
+.mikutap{
+  position:relative;height:216px;
+  border:1px solid var(--line);border-radius:16px;
+  background:rgba(255,255,255,.025);
+  overflow:hidden;cursor:pointer;
+  padding:16px;
+}
+/* 主题色毛玻璃层：Miku 青 + Teto 红粉（按音源切换透明度） */
+.mikutap::before,.mikutap::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  pointer-events:none;
+  background:radial-gradient(600px 200px at 50% 120%, var(--tint-c), transparent 70%);
+}
+.mikutap::before{--tint-c:rgba(57,197,187,.12);opacity:var(--miku-tint,1)}
+.mikutap::after{--tint-c:rgba(255,77,109,.12);opacity:var(--teto-tint,0)}
+/* MIX：呼吸 + 色相流动 + 边框辉光 + 中心光晕 多种效果 */
+.mikutap.mix-glow{animation:borderGlow 3.2s ease-in-out infinite}
+.mikutap.mix-glow::before{animation:mikuPulse 3.2s ease-in-out infinite, hueFlow 3.2s linear infinite}
+.mikutap.mix-glow::after{animation:tetoPulse 3.2s ease-in-out infinite, hueFlow 3.2s linear infinite}
+@keyframes mikuPulse{0%,100%{opacity:1}50%{opacity:.12}}
+@keyframes tetoPulse{0%,100%{opacity:.12}50%{opacity:1}}
+@keyframes hueFlow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+@keyframes borderGlow{
+  0%,100%{box-shadow:0 0 0 1px rgba(57,197,187,.28), 0 0 26px rgba(57,197,187,.16)}
+  50%{box-shadow:0 0 0 1px rgba(255,77,109,.28), 0 0 26px rgba(255,77,109,.16)}
+}
+.mix-halo{
+  position:absolute;left:50%;top:50%;width:40px;height:40px;border-radius:50%;
+  transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:0;
+  background:radial-gradient(circle, rgba(255,255,255,.13), transparent 62%);
+}
+.mikutap.mix-glow .mix-halo{display:block;animation:haloExpand 3.2s ease-out infinite}
+@keyframes haloExpand{
+  0%{width:40px;height:40px;opacity:.9}
+  100%{width:420px;height:420px;opacity:0}
+}
+.mikutap canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.src-watermark{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:0;pointer-events:none;user-select:none;
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(2.6rem,8vw,4.6rem);
+  letter-spacing:.18em;text-indent:.18em;
+  color:rgba(255,255,255,.05);
+  white-space:nowrap;
+  transition:color .6s ease;
+}
+.tap-hint{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:3;
+  color:var(--ink-faint);font-size:.72rem;letter-spacing:.26em;text-indent:.26em;
+  text-align:center;line-height:2.2;pointer-events:none;user-select:none;
+  transition:opacity .5s;
+  background:rgba(13,16,25,.72);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  padding:10px 22px;border-radius:12px;border:1px solid var(--line);
+}
+.mikutap.played .tap-hint{opacity:0}
+
+/* 时间线 */
+.timeline{list-style:none;position:relative;padding-left:26px;display:flex;flex-direction:column;gap:18px}
+.timeline::before{
+  content:"";position:absolute;left:7px;top:6px;bottom:6px;
+  width:1px;background:var(--line);
+}
+.timeline li{position:relative}
+.timeline li::before{
+  content:"";position:absolute;left:-23px;top:7px;width:9px;height:9px;border-radius:50%;
+  background:var(--accent);opacity:.9;
+  box-shadow:0 0 0 3px rgba(224,100,92,.14);
+}
+.tl-year{
+  font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;
+  color:var(--accent);font-weight:700;margin-right:10px;
+}
+.timeline p{display:inline;color:var(--ink-soft);font-size:.88rem}
+
+/* 站点卡片 */
+.sites{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:640px){.sites{grid-template-columns:1fr}}
+.site-card{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:20px 12px;text-align:center;
+  background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:15px;
+  text-decoration:none;color:inherit;
+  transition:all .32s cubic-bezier(.22,.61,.36,1);
+}
+.site-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(224,100,92,.5);
+  background:rgba(224,100,92,.07);
+  box-shadow:0 12px 34px rgba(0,0,0,.4);
+}
+.s-ico{width:34px;height:34px;color:var(--accent);opacity:.9}
+.s-body{display:flex;flex-direction:column;gap:2px}
+.s-body strong{font-size:.92rem;font-weight:700}
+.s-body em{font-style:normal;font-size:.76rem;color:var(--ink-soft)}
+
+/* 兴趣: 无边框清爽标签 */
+.skills{display:flex;flex-wrap:wrap;gap:6px 22px}
+.skills span{
+  position:relative;color:var(--ink-soft);font-size:.87rem;
+  padding:4px 0;cursor:default;
+  transition:color .3s;
+}
+.skills span::after{
+  content:"";position:absolute;left:0;bottom:0;width:100%;height:1.5px;
+  background:linear-gradient(90deg,var(--accent),transparent 80%);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .38s cubic-bezier(.22,.61,.36,1);
+}
+.skills span:hover{color:var(--ink)}
+.skills span:hover::after{transform:scaleX(1)}
+
+/* ================= 底部链接条（毛玻璃点缀 + 玻璃按钮） ================= */
+.links-bar{
+  margin-top:36px;padding:20px 28px;
+  display:flex;align-items:center;gap:14px 30px;flex-wrap:wrap;
+  justify-content:center;
+  background:rgba(20,23,32,.42);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);
+  backdrop-filter:blur(18px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:18px;
+  box-shadow:0 18px 55px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.bar-label{
+  font-size:.66rem;letter-spacing:.32em;text-indent:.32em;color:var(--ink-faint);
+}
+.social-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.social-links a{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:9px 22px;border-radius:999px;
+  background:rgba(255,255,255,.06);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.13);
+  color:var(--ink-soft);text-decoration:none;
+  font-size:.9rem;letter-spacing:.05em;
+  transition:all .32s cubic-bezier(.22,.61,.36,1);
+}
+.social-links a:hover{
+  color:var(--ink);
+  border-color:rgba(224,100,92,.55);
+  background:rgba(224,100,92,.13);
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(0,0,0,.38), 0 0 20px rgba(224,100,92,.14);
+}
+.social-links a:active{transform:translateY(0)}
+.li-ico{width:16px;height:16px;flex:none;opacity:.9}
+
+/* ---------- 滚动渐显 / 页脚 / 无障碍 ---------- */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .9s ease, transform .9s cubic-bezier(.22,.61,.36,1)}
+.reveal.on{opacity:1;transform:none}
+
+footer{
+  position:relative;z-index:3;text-align:center;
+  color:var(--ink-faint);font-size:.74rem;letter-spacing:.14em;
+  padding:36px 20px 12px;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-glow"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<main>
+  <div class="layout">
+
+    <!-- ============ 左栏 ============ -->
+    <aside class="sidebar glass fade fade-1 tilt">
+      <div class="avatar">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Salticat 头像">
+          <path d="M33 47 L26 20 L52 35 Z" fill="none" stroke="#eae6dc" stroke-width="3.2" stroke-linejoin="round"/>
+          <path d="M87 47 L94 20 L68 35 Z" fill="none" stroke="#eae6dc" stroke-width="3.2" stroke-linejoin="round"/>
+          <circle cx="60" cy="62" r="33" fill="none" stroke="#eae6dc" stroke-width="3.2"/>
+          <circle cx="47" cy="57" r="3.4" fill="#eae6dc"/>
+          <circle cx="73" cy="57" r="3.4" fill="#eae6dc"/>
+          <circle cx="35" cy="66" r="4.4" fill="#e0645c" opacity=".5"/>
+          <circle cx="85" cy="66" r="4.4" fill="#e0645c" opacity=".5"/>
+          <path d="M56 67 Q60 71 64 67" fill="none" stroke="#eae6dc" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M27 56 L12 50 M27 62 L12 64 M93 56 L108 50 M93 62 L108 64" stroke="#eae6dc" stroke-width="2" stroke-linecap="round" opacity=".75"/>
+          <circle cx="60" cy="82" r="5" fill="#e0645c" stroke="#0d1019" stroke-width="1.5"/>
+        </svg>
+      </div>
+
+      <h1 class="name">SALTICAT<span class="dot">.</span></h1>
+      <div class="rule"></div>
+      <p class="subtitle">一条爱折腾的猫</p>
+
+      <p class="bio">不是专业程序员，平时喜欢折腾代码和硬件，
+        也爱看动画漫画电影、打打游戏。</p>
+
+      <ul class="info">
+        <li>折腾代码和硬件</li>
+        <li>游戏、动画、漫画、电影</li>
+        <li>深夜出没</li>
+      </ul>
+    </aside>
+
+    <!-- ============ 中栏 ============ -->
+    <div class="content">
+
+      <section class="panel reveal">
+        <p class="hello">不会的东西，<br>拆开看看就会了。</p>
+      </section>
+
+      <!-- GITHUB 动态贡献图（每次访问实时拉取） -->
+      <section class="panel reveal">
+        <div class="divider"><span>GITHUB</span></div>
+        <div id="contribWrap" class="contrib-wrap"><div class="contrib-msg">加载中…</div></div>
+      </section>
+
+      <!-- PLAY: Teto 五十音键盘（MikuTap 网格方案） -->
+      <section class="panel reveal">
+        <div class="divider">
+          <span>PLAY</span>
+          <div class="src-switch">
+            <button class="src-opt active" id="srcMiku" type="button">MIKU</button>
+            <button class="src-opt" id="srcTeto" type="button">TETO</button>
+            <button class="src-opt" id="srcMix" type="button">MIX</button>
+            <button class="src-opt" id="srcAuto" type="button">AUTO</button>
+          </div>
+          <button class="bgm-toggle on" id="bgmToggle" type="button">♪ BGM</button>
+        </div>
+        <div class="mikutap" id="mikutap">
+          <canvas id="tapCanvas"></canvas>
+          <div class="mix-halo"></div>
+          <div class="src-watermark" id="srcWatermark">MIKU</div>
+          <div class="tap-hint">点击任意位置演奏<br>键盘 0-9 / A-V · ♪ 开背景音乐</div>
+        </div>
+      </section>
+
+      <section class="panel reveal">
+        <div class="divider"><span>INTERESTS</span></div>
+        <div class="skills" id="interests">
+          <span>代码</span>
+          <span>硬件</span>
+          <span>游戏</span>
+          <span>动画</span>
+          <span>漫画</span>
+          <span>电影</span>
+        </div>
+      </section>
+
+      <section class="panel reveal">
+        <div class="divider"><span>TIMELINE</span></div>
+        <div id="timelineWrap">
+          <ol class="timeline">
+            <li><span class="tl-year">2026</span><p>搭起个人主页，准备写博客</p></li>
+            <li><span class="tl-year">2025</span><p>折腾出 HomeDashboard 智能家居仪表盘</p></li>
+            <li><span class="tl-year">2024</span><p>开始认真折腾代码和硬件</p></li>
+            <li><span class="tl-year">2018</span><p>第一次接触编程（占位，可改）</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="panel reveal">
+        <div class="divider"><span>SITE</span></div>
+        <div class="sites">
+          <a class="site-card" href="#" data-blog>
+            <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span class="s-body"><strong>博客</strong><em>随缘更新</em></span>
+          </a>
+          <a class="site-card" href="https://github.com/snovvessel" target="_blank" rel="noopener">
+            <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 3v15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
+            </svg>
+            <span class="s-body"><strong>GitHub</strong><em>代码与折腾</em></span>
+          </a>
+          <a class="site-card" href="mailto:salticat@example.com">
+            <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <path d="M22 6l-10 7L2 6"/>
+            </svg>
+            <span class="s-body"><strong>邮箱</strong><em>有事联系</em></span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ 底部链接条 ============ -->
+  <section class="links-bar fade fade-3">
+    <span class="bar-label">LINKS</span>
+    <div class="social-links">
+      <a href="https://github.com/snovvessel" target="_blank" rel="noopener">
+        <svg class="li-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3v15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
+        </svg>
+        GitHub
+      </a>
+      <a href="#" data-blog>
+        <svg class="li-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        Blog
+      </a>
+      <a href="mailto:salticat@example.com">
+        <svg class="li-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <path d="M22 6l-10 7L2 6"/>
+        </svg>
+        Mail
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>© 2026 Salticat</footer>
+
+<script>
+// ===== 博客接入配置（部署后修改） =====
+var BLOG_BASE = 'https://blog.example.com';   // ← 改成你的博客域名（如 https://blog.yourdomain.com）
+var TIMELINE_CATEGORY = '年度总结';            // ← 时间线只收集该分类的文章（Halo 后台创建分类并归类文章）
+// 说明：时间线直接跨域请求博客 API（Halo 需允许 CORS，或你自己的反代处理）；
+//       请求失败时自动回退显示静态时间线，不影响主页
+// ========================================
+// ---------- 鼠标光晕（平滑跟随） ----------
+(function(){
+  var glow = document.querySelector('.cursor-glow');
+  if(!glow || matchMedia('(hover:none)').matches) return;
+  var x = innerWidth/2, y = innerHeight/2, tx = x, ty = y;
+  addEventListener('mousemove', function(e){ tx = e.clientX; ty = e.clientY; }, {passive:true});
+  (function loop(){
+    x += (tx - x) * .10; y += (ty - y) * .10;
+    glow.style.transform = 'translate(' + (x - 260) + 'px,' + (y - 260) + 'px)';
+    requestAnimationFrame(loop);
+  })();
+})();
+
+// ---------- 3D 倾斜（卡片跟随鼠标微倾） ----------
+(function(){
+  var cards = document.querySelectorAll('.tilt');
+  cards.forEach(function(c){
+    c.addEventListener('mousemove', function(e){
+      var r = c.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width - .5;
+      var py = (e.clientY - r.top) / r.height - .5;
+      c.style.transform = 'perspective(900px) rotateY(' + (px * 5).toFixed(2) + 'deg) rotateX(' + (-py * 5).toFixed(2) + 'deg)';
+    });
+    c.addEventListener('mouseleave', function(){
+      c.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg)';
+    });
+  });
+})();
+
+// ---------- TIMELINE 自动更新（博客年度总结分类，最近 4 条） ----------
+(function(){
+  var wrap = document.getElementById('timelineWrap');
+  if (!wrap) return;
+  var api = BLOG_BASE + '/apis/api.content.halo.run/v1alpha1/posts?page=0&size=4&sort=publishTime,desc&categories=' + encodeURIComponent(TIMELINE_CATEGORY);
+  fetch(api, {headers: {'Accept': 'application/json'}})
+    .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(function(d){
+      var items = (d.items || []).filter(function(it){ return it.spec && it.spec.publishTime && it.spec.title; });
+      if (!items.length) throw new Error('empty');
+      wrap.innerHTML = '<ol class="timeline">' + items.map(function(it){
+        var dt = new Date(it.spec.publishTime);
+        var y = dt.getFullYear();
+        var md = (dt.getMonth() + 1) + '月' + dt.getDate() + '日';
+        var url = BLOG_BASE + '/archives/' + (it.spec.slug || it.metadata.name);
+        return '<li><span class="tl-year">' + y + '</span><p><a href="' + url + '" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.22)">' + it.spec.title + '</a> <em style="color:var(--ink-faint);font-style:normal;font-size:.74rem">' + md + '</em></p></li>';
+      }).join('') + '</ol>';
+    })
+    .catch(function(){ /* 博客未接入时保持静态时间线 */ });
+})();
+
+// ---------- GITHUB 动态贡献图（每次访问实时拉取） ----------
+(function(){
+  var wrap = document.getElementById('contribWrap');
+  if (!wrap) return;
+  var colors = ["rgba(255,255,255,.055)", "#5c2e2b", "#8a423c", "#b8524a", "#e0645c"];
+  function draw(list){
+    if (!list || !list.length){ wrap.innerHTML = '<div class="contrib-msg">暂无贡献数据</div>'; return; }
+    var CELL = 10, GAP = 3, R = 2, PAD = 2, TOP = 18;
+    var weeks = Math.ceil(list.length / 7);
+    var w = PAD*2 + weeks*(CELL+GAP), h = TOP + 7*(CELL+GAP) + PAD;
+    var s = ['<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">'];
+    var prevM = null;
+    list.forEach(function(item, i){
+      var col = Math.floor(i/7), row = i % 7;
+      var x = PAD + col*(CELL+GAP), y = TOP + row*(CELL+GAP);
+      if (row === 0){
+        var m = parseInt(String(item.date).slice(5,7), 10);
+        if (m !== prevM){ prevM = m;
+          s.push('<text x="'+(x+CELL/2)+'" y="'+(TOP-5)+'" text-anchor="middle" font-size="6.5" fill="#6e6a60" font-family="Georgia,serif">'+m+'月</text>'); }
+      }
+      var lvl = Math.min(4, Math.max(0, parseInt(item.level,10) || 0));
+      s.push('<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="'+R+'" fill="'+colors[lvl]+'"/>');
+    });
+    s.push('</svg>');
+    wrap.innerHTML = s.join('');
+  }
+  fetch('https://github-contributions-api.jogruber.de/v4/snovvessel?y=last')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ draw(d.contributions || []); })
+    .catch(function(){ wrap.innerHTML = '<div class="contrib-msg">贡献图加载失败</div>'; });
+})();
+
+// ---------- PLAY: MikuTap 风格（Miku 音效 + 清新粒子） ----------
+(function(){
+  var box = document.getElementById('mikutap');
+  var canvas = document.getElementById('tapCanvas');
+  if (!box || !canvas) return;
+  var ctx = canvas.getContext('2d');
+  var AC = window.AudioContext || window.webkitAudioContext;
+  var ac = null, buffers = [], loadedCount = 0;
+  var particles = [];
+  var glyphs = ['\u266A','\u266B','\u266C','\u30DF','\u30AF','\u30C6','\u30C8','\u2727'];
+  var colors = ['#39c5bb','#ff8ac2','#ffb347','#9fd8ff','#ffffff'];
+
+  function resize(){
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = box.clientWidth * dpr;
+    canvas.height = box.clientHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ===== 原版 MikuTap 音效：32 个 Miku 采样 + 原版每音音量 =====
+  var N_SOUNDS = 32;
+  var VOLS = [1.2, 1.56, 1.92, 1.62, 1.2, 2.04, 1.2, 1.2, 1.2, 0.96,
+              1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 0.96, 1.2, 1.2,
+              1.2, 1.2, 1.08, 1.2, 1.2, 0.84, 1.2, 1.2, 1.2, 1.44, 1.2, 1.2];
+  for (var si = 0; si < N_SOUNDS; si++){
+    (function(n){
+      fetch('sounds/main/' + n + '.mp3')
+        .then(function(r){ return r.arrayBuffer(); })
+        .then(function(buf){
+          if (!ac) ac = new AC();
+          return ac.decodeAudioData(buf);
+        })
+        .then(function(ab){ buffers[n] = ab; })
+        .catch(function(){});
+    })(si);
+  }
+  // ===== Teto 模式：32 个成品音效（已按对照表对齐原版 f0/时长，零处理） =====
+  var tetoFinal = [];
+  for (var fi = 0; fi < 32; fi++){
+    (function(n){
+      fetch('sounds/teto_final/' + n + '.mp3')
+        .then(function(r){ return r.arrayBuffer(); })
+        .then(function(buf){
+          if (!ac) ac = new AC();
+          return ac.decodeAudioData(buf);
+        })
+        .then(function(ab){ tetoFinal[n] = ab; })
+        .catch(function(){});
+    })(fi);
+  }
+
+  // ===== 原版 MikuTap 音频引擎：280BPM 节拍量化 + 原版排列 =====
+  var BEAT = 60000 / 280 / 1000;   // 一拍 ≈ 0.214s（原版 280 BPM）
+  var nextBeat = 0;
+  // 共享主输出链：压缩器统一声场（BGM + Teto 融合关键）
+  var masterGain = null, masterComp = null;
+  function ensureMaster(){
+    if (!ac || masterComp) return;
+    masterComp = ac.createDynamicsCompressor();
+    masterComp.threshold.value = -14;
+    masterComp.knee.value = 24;
+    masterComp.ratio.value = 5;
+    masterComp.attack.value = 0.003;
+    masterComp.release.value = 0.28;
+    masterGain = ac.createGain();
+    masterGain.gain.value = 0.85;
+    masterGain.connect(masterComp);
+    masterComp.connect(ac.destination);
+  }
+
+  // 原版：采样自带音高，不变速
+  var mode = 'miku';
+  // 播放器：支持声像分离 / 低通柔化 / 时间错层（混音四重错层）
+  function playOne(buf, rate, vol, when, opts){
+    if (!buf) return;
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    var g = ac.createGain();
+    g.gain.value = vol;
+    src.connect(g);                       // 关键！源 → 增益（之前漏了这行导致全无声）
+    if (opts && opts.fadeIn){             // 主唱切换淡入（顺滑过渡）
+      g.gain.setValueAtTime(vol * 0.35, when);
+      g.gain.linearRampToValueAtTime(vol, when + 0.09);
+    } else {
+      g.gain.setValueAtTime(vol, when);
+    }
+    var node = g;
+    if (opts){
+      if (opts.delay) when += opts.delay;          // C. 时间错层
+      if (opts.pan !== undefined && ac.createStereoPanner){
+        try {                                      // A. 声像分离（不支持则跳过）
+          var p = ac.createStereoPanner();
+          p.pan.value = opts.pan;
+          g.connect(p); node = p;
+        } catch(e){}
+      }
+      if (opts.lowpass && ac.createBiquadFilter){
+        try {                                      // B. 低通柔化（失败不影响播放）
+          var f = ac.createBiquadFilter();
+          f.type = 'lowpass';
+          f.frequency.value = opts.lowpass;
+          node.connect(f); node = f;
+        } catch(e){}
+      }
+    }
+    if (opts && opts.bus) node.connect(opts.bus);   // 声部总线（交叉淡化用）
+    else node.connect(masterGain);
+    src.start(when);
+  }
+  function playByIdx(n){
+    if (!ac) ac = new AC();
+    if (ac.state === 'suspended') ac.resume();   // 关键：非手势创建的 ctx 需 resume（原版 aidn 做法）
+    ensureMaster();
+    var now = ac.currentTime;
+    if (nextBeat - now > BEAT * 4) return;   // 排队上限，防止连点堆音
+    var when = Math.max(now, nextBeat);      // 对齐节拍网格（原版: 延迟到下一拍）
+    nextBeat = when + BEAT;
+    var eff = mode === 'auto' ? autoSub : mode;   // AUTO 时按当前随机子模式
+    if (eff === 'miku'){
+      playOne(buffers[n], 1, VOLS[n] * 0.25, when);
+    } else if (eff === 'teto'){
+      playOne(tetoFinal[n], 1, 0.3, when);
+    } else if (eff === 'mix'){
+      // 全齐唱：Miku 左声道 + Teto 右声道（左右分离 = 核心提升）
+      playOne(buffers[n], 1, VOLS[n] * 0.2, when, {pan: -0.25});
+      playOne(tetoFinal[n], 1, 0.2, when, {pan: 0.25});
+    }
+  }
+
+  // ===== BGM 引擎（MikuTap 原版乐谱编排, 280BPM） =====
+  var BGM_BASS = [0,1,2,1];
+  var BGM_SONGS = [3,4,4,3,4,4,3,4,4,3,4,4,3,4,3,4,
+                   5,6,6,5,6,6,5,6,6,5,6,6,5,6,5,6,
+                   7,8,8,7,8,8,7,8,8,7,8,8,7,8,7,8,
+                   9,10,10,9,10,10,9,10,10,9,10,10,9,10,9,10];
+  var bgmBuf = [], bgmOn = false, bgmBeat = 0, bgmNext = 0;
+  for (var bi = 0; bi < 11; bi++){
+    (function(n){
+      fetch('sounds/bgm/' + n + '.mp3')
+        .then(function(r){ return r.arrayBuffer(); })
+        .then(function(buf){
+          if (!ac) ac = new AC();
+          return ac.decodeAudioData(buf);
+        })
+        .then(function(ab){ bgmBuf[n] = ab; })
+        .catch(function(){});
+    })(bi);
+  }
+  function scheduleBgm(when, n){
+    var ab = bgmBuf[n];
+    if (!ab) return;
+    ensureMaster();
+    var src = ac.createBufferSource();
+    src.buffer = ab;
+    src.playbackRate.value = 1;
+    var g = ac.createGain();
+    // 原版 BGM 音量：1 号轨 ×0.6，其余 ×1.2（缩放到 0.12 基准）
+    g.gain.value = (n === 1 ? 0.72 : 1.2) * 0.12;
+    src.connect(g); g.connect(masterGain);
+    src.start(when);
+  }
+  function startBgm(){
+    if (bgmOn || !ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    bgmOn = true; bgmBeat = 0;
+    bgmNext = ac.currentTime + 0.05;
+    var btn = document.getElementById('bgmToggle');
+    if (btn) btn.classList.add('on');
+  }
+  function stopBgm(){ bgmOn = false; }
+  function bgmTick(){
+    if (!bgmOn || !ac) return;
+    var now = ac.currentTime;
+    // 防积压：页面离开期间 rAF 暂停导致 bgmNext 落后 → 重新对齐拍点（避免返回时叠加播放）
+    if (bgmNext < now - 0.4){
+      bgmNext = now + 0.05;
+    }
+    while (bgmNext <= now + 0.35){
+      var v = bgmBeat % 64;
+      scheduleBgm(bgmNext, BGM_BASS[v % 4]);
+      scheduleBgm(bgmNext, BGM_SONGS[v]);
+      bgmNext += BEAT;
+      bgmBeat++;
+    }
+  }
+
+  function burst(x, y){
+    // 原版式：大字符音符/假名飘出 + 少量小粒子
+    var n = 9 + Math.floor(Math.random() * 6);
+    for (var i = 0; i < n; i++){
+      var a = Math.random() * Math.PI * 2, sp = 0.8 + Math.random() * 2.6;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.2,
+        life: 1, decay: 0.010 + Math.random() * 0.012,
+        size: 1.5 + Math.random() * 2.2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        glyph: Math.random() < 0.55 ? glyphs[Math.floor(Math.random() * glyphs.length)] : null,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.12
+      });
+    }
+    if (particles.length > 400) particles.splice(0, particles.length - 400);
+  }
+
+  function tick(){
+    bgmTick();
+    ctx.clearRect(0, 0, box.clientWidth, box.clientHeight);
+    for (var i = particles.length - 1; i >= 0; i--){
+      var p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.055; p.vx *= 0.985;
+      p.life -= p.decay;
+      if (p.life <= 0){ particles.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      if (p.glyph){
+        p.rot += p.vr;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.font = (p.size * 8) + 'px Georgia, serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(p.glyph, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // 原版 hitcheck：8×4 均分区域，点击任意位置（无死角）→ 对应格子音
+  function hitIdx(x, y){
+    var w = box.clientWidth || 1, h = box.clientHeight || 1;
+    var col = Math.max(0, Math.min(7, Math.floor(x / w * 8)));
+    var row = Math.max(0, Math.min(3, Math.floor(y / h * 4)));
+    return row * 8 + col;
+  }
+  function tapAt(x, y){
+    if (!box.classList.contains('played')) box.classList.add('played');
+    if (!bgmOn) startBgm();
+    playByIdx(hitIdx(x, y));
+    burst(x, y);
+  }
+  function tapById(i){
+    if (!box.classList.contains('played')) box.classList.add('played');
+    if (!bgmOn) startBgm();
+    playByIdx(i);
+    var w = box.clientWidth, h = box.clientHeight;
+    burst((i % 8 + 0.5) * w / 8, (Math.floor(i / 8) + 0.5) * h / 4);
+  }
+  var lastHit = -1;
+  box.addEventListener('mousedown', function(e){
+    var r = box.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    lastHit = hitIdx(x, y);
+    tapAt(x, y);
+  });
+  // 滑动演奏（原版：按住拖动，每进入新格子触发该格音效）
+  box.addEventListener('mousemove', function(e){
+    if (!(e.buttons & 1)) return;
+    var r = box.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    var i = hitIdx(x, y);
+    if (i !== lastHit){
+      lastHit = i;
+      tapAt(x, y);
+    }
+  });
+  box.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    var t = e.touches[0], r = box.getBoundingClientRect();
+    lastHit = hitIdx(t.clientX - r.left, t.clientY - r.top);
+    tapAt(t.clientX - r.left, t.clientY - r.top);
+  }, {passive:false});
+  box.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    var t = e.touches[0], r = box.getBoundingClientRect();
+    var x = t.clientX - r.left, y = t.clientY - r.top;
+    var i = hitIdx(x, y);
+    if (i !== lastHit){
+      lastHit = i;
+      tapAt(x, y);
+    }
+  }, {passive:false});
+
+  // 音源切换：MIKU / TETO / MIX（叠加）/ AUTO（随机切换）
+  var autoSub = 'miku', autoTimer = null;
+  var AUTO_MODES = ['miku', 'teto', 'mix'];
+  function wmText(sub){
+    return sub === 'miku' ? 'MIKU' : sub === 'teto' ? 'TETO' : 'MIKU+TETO';
+  }
+  function setWatermark(sub){
+    var w = document.getElementById('srcWatermark');
+    if (w) w.textContent = wmText(sub);
+    // 毛玻璃主题色：Miku 青 / Teto 红粉 / MIX 青粉呼吸
+    var box = document.getElementById('mikutap');
+    if (box){
+      box.classList.toggle('mix-glow', sub === 'mix');
+      box.style.setProperty('--miku-tint', (sub === 'miku' || sub === 'mix') ? 1 : 0);
+      box.style.setProperty('--teto-tint', (sub === 'teto' || sub === 'mix') ? 1 : 0);
+    }
+    // SALTICAT 渐变跟随主题色
+    var nameEl = document.querySelector('.name');
+    if (nameEl){
+      var c2, c3;
+      if (sub === 'teto'){ c2 = '#FF4D6D'; c3 = '#ffa3b8'; }
+      else if (sub === 'mix'){ c2 = '#39C5BB'; c3 = '#FF4D6D'; }
+      else { c2 = '#39C5BB'; c3 = '#8fe8df'; }
+      nameEl.style.setProperty('--name-c2', c2);
+      nameEl.style.setProperty('--name-c3', c3);
+      nameEl.classList.toggle('name-hue', sub === 'mix');
+    }
+  }
+  // AUTO 必切换：排除当前子模式，保证换到不同的
+  function nextAutoSub(){
+    var others = AUTO_MODES.filter(function(m){ return m !== autoSub; });
+    autoSub = others[Math.floor(Math.random() * others.length)];
+    setWatermark(autoSub);
+  }
+  function setMode(m){
+    mode = m;
+    if (m === 'auto'){
+      if (!autoTimer){
+        autoSub = AUTO_MODES[Math.floor(Math.random() * 3)];
+        autoTimer = setInterval(nextAutoSub, 2000 + Math.random() * 3000);
+      }
+      setWatermark(autoSub);
+    } else {
+      if (autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+      setWatermark(m);
+    }
+    var map = {miku:'srcMiku', teto:'srcTeto', mix:'srcMix', auto:'srcAuto'};
+    Object.keys(map).forEach(function(k){
+      var el = document.getElementById(map[k]);
+      if (el) el.classList.toggle('active', k === m);
+    });
+  }
+  ['srcMiku','srcTeto','srcMix','srcAuto'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', function(){ setMode(id.slice(3).toLowerCase()); });
+  });
+
+  // 返回页面时：重新对齐 BGM 拍点 + 恢复音频上下文（防离开期间的积压叠加）
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden){
+      if (ac && ac.state === 'suspended') ac.resume();
+      if (bgmOn && ac) bgmNext = ac.currentTime + 0.05;
+    }
+  });
+
+  // BGM 开关
+  var bgmBtn = document.getElementById('bgmToggle');
+  if (bgmBtn) bgmBtn.addEventListener('click', function(){
+    if (!ac) ac = new AC();
+    if (bgmOn){ stopBgm(); bgmBtn.classList.remove('on'); }
+    else startBgm();
+  });
+
+  // 键盘：原版映射（数字 0-9 → 0-9，字母 A-V → 10-31），空格 → 随机
+  addEventListener('keydown', function(e){
+    if (e.repeat) return;
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    var kc = e.keyCode || e.which;
+    var id = -1;
+    if (kc >= 65 && kc <= 90) id = kc - 55;        // A-Z → 10-35
+    else if (kc >= 48 && kc <= 57) id = kc - 48;   // 0-9 → 0-9
+    if (id >= 0 && id < 32){
+      tapById(id);
+    } else if (e.code === 'Space'){
+      e.preventDefault();
+      tapById(Math.floor(Math.random() * 32));
+    }
+  });
+})();
+
+// ---------- 滚动渐显 ----------
+(function(){
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('on'); obs.unobserve(e.target); }
+    });
+  }, {threshold:.2});
+  document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
+})();
+
+// ---------- 博客链接占位 ----------
+document.querySelectorAll('[data-blog]').forEach(function(a){
+  a.addEventListener('click', function(ev){ ev.preventDefault(); });
+});
+</script>
+</body>
+</html>
