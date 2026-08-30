@@ -445,7 +445,7 @@ footer{
     <div class="content">
 
       <section class="panel reveal">
-        <p class="hello">不会的东西，<br>拆开看看就会了。</p>
+        <p class="hello" id="helloQuote">不会的东西，<br>拆开看看就会了。</p>
       </section>
 
       <!-- GITHUB 动态贡献图（每次访问实时拉取） -->
@@ -558,11 +558,34 @@ footer{
 
 <script>
 // ===== 博客接入配置（部署后修改） =====
-var BLOG_BASE = 'https://blog.example.com';   // ← 改成你的博客域名（如 https://blog.yourdomain.com）
+var BLOG_BASE = 'https://blog.moee.top';        // 你的 Halo 博客域名
 var TIMELINE_CATEGORY = '年度总结';            // ← 时间线只收集该分类的文章（Halo 后台创建分类并归类文章）
 // 说明：时间线直接跨域请求博客 API（Halo 需允许 CORS，或你自己的反代处理）；
 //       请求失败时自动回退显示静态时间线，不影响主页
 // ========================================
+// ---------- 格言区：调用一言 API（诗词/哲学），失败保留原句 ----------
+(function(){
+  var el = document.getElementById('helloQuote');
+  if (!el) return;
+  var fallback = '不会的东西，拆开看看就会了。';
+  var done = false;
+  function showFallback(){
+    if (done) return;
+    done = true;
+    el.textContent = fallback;
+  }
+  setTimeout(showFallback, 3000);
+  // c=c 诗词 / d 哲学（格言区专属分类）
+  fetch('https://v1.hitokoto.cn/?c=c&c=d', {headers: {'Accept': 'application/json'}})
+    .then(function(r){ if (!r.ok) throw new Error('http'); return r.json(); })
+    .then(function(d){
+      if (done || !d || !d.hitokoto) throw new Error('bad');
+      done = true;
+      el.textContent = d.hitokoto.slice(0, 30);   // 格言大字，控制长度
+    })
+    .catch(showFallback);
+})();
+
 // ---------- 鼠标光晕（平滑跟随） ----------
 (function(){
   var glow = document.querySelector('.cursor-glow');
@@ -596,12 +619,16 @@ var TIMELINE_CATEGORY = '年度总结';            // ← 时间线只收集该�
 (function(){
   var wrap = document.getElementById('timelineWrap');
   if (!wrap) return;
-  var api = BLOG_BASE + '/apis/api.content.halo.run/v1alpha1/posts?page=0&size=4&sort=publishTime,desc&categories=' + encodeURIComponent(TIMELINE_CATEGORY);
+  // 注意：Halo 的 sort 参数会 500，改为拉取后前端排序
+  var api = BLOG_BASE + '/apis/api.content.halo.run/v1alpha1/posts?page=0&size=10&categories=' + encodeURIComponent(TIMELINE_CATEGORY);
   fetch(api, {headers: {'Accept': 'application/json'}})
     .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
     .then(function(d){
       var items = (d.items || []).filter(function(it){ return it.spec && it.spec.publishTime && it.spec.title; });
       if (!items.length) throw new Error('empty');
+      // 前端按发布时间降序，取最近 4 条
+      items.sort(function(a, b){ return (b.spec.publishTime || '').localeCompare(a.spec.publishTime || ''); });
+      items = items.slice(0, 4);
       wrap.innerHTML = '<ol class="timeline">' + items.map(function(it){
         var dt = new Date(it.spec.publishTime);
         var y = dt.getFullYear();
