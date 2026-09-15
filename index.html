@@ -391,15 +391,17 @@ main{
 .reveal.on{opacity:1;transform:none}
 
 footer{
-  position:relative;z-index:3;text-align:center;
+  position:relative;z-index:3;
   color:var(--ink-faint);font-size:.74rem;letter-spacing:.14em;
   padding:36px 20px 12px;
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 10px;
 }
 footer a{
   color:var(--ink-faint);text-decoration:none;
   transition:color .25s ease;
 }
 footer a:hover{color:var(--ink);}
+footer .f-sep{opacity:.45;}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
@@ -560,13 +562,11 @@ footer a:hover{color:var(--ink);}
 </main>
 
 <footer>
-  © 2026 Salticat
-  <br>
+  <span>© 2026 Salticat</span>
+  <span class="f-sep" aria-hidden="true">·</span>
   <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">冀ICP备2026036088号-1</a>
-  <br>
-  <a href="https://beian.mps.gov.cn/#/query/webSearch?code=13010202004721" target="_blank" rel="noopener">
-    <img src="beian.png" alt="" style="height:16px;width:auto;vertical-align:-4px;margin-right:4px">冀公网安备13010202004721号
-  </a>
+  <span class="f-sep" aria-hidden="true">·</span>
+  <a href="https://beian.mps.gov.cn/#/query/webSearch?code=13010202004721" target="_blank" rel="noopener"><img src="beian.png" alt="" style="height:16px;width:auto;vertical-align:-4px;margin-right:4px">冀公网安备13010202004721号</a>
 </footer>
 
 <script>
